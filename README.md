@@ -1,16 +1,55 @@
-# beechem_app
+# ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter&logoColor=white) BEE CHEM Mobile App
 
-A new Flutter project.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+### Login Screen
+- Email & Password input with validation (Email format + Password ≥ 6 characters)  
+- "Remember Me" functionality (saves email locally)  
+- Password visibility toggle  
+- Custom SnackBars for success/error messages  
+- Redirects to **Personnel List Screen** on successful login  
 
-A few resources to get you started if this is your first Flutter project:
+### Personnel List Screen
+- Fetches personnel data via API  
+- Displays **Full Name, Role, Contact Number, Full Address**  
+- Search bar with input + “GO” button  
+- Floating Action Button to navigate to **Add Personnel Screen**  
+- Handles **loading, error, and empty states**  
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Add Personnel Screen
+- Input fields: Full Name, Address, Suburb, State, Postcode, Country, Contact Number  
+- Role dropdown fetched from API  
+- Status toggle: Active / Inactive  
+- Latitude & Longitude display  
+- Save & Cancel buttons with form validation and API submission  
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+##  Tech Stack
+
+- **Flutter** ≥3.x  
+- **State Management**: Provider  
+- **Networking**: HTTP  
+- **Local Storage**: Shared Preferences  
+- **Architecture**: Clean separation between core, data, and presentation layers  
+
+---
+
+## Project Structure
+
+```text
+lib/
+├── core/
+│   ├── constants/    # API endpoints
+│   ├── network/      # HTTP client
+│   ├── storage/      # SharedPreferences helper
+│   └── utils/        # Form validators
+├── data/
+│   ├── models/       # Login, Personnel, Role models
+│   └── services/     # API service classes
+├── presentation/
+│   ├── providers/    # State management
+│   ├── screens/      # UI screens
+│   └── widgets/      # Reusable widgets
+└── main.dart
