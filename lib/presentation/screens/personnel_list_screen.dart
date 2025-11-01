@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:beechem_app/presentation/widgets/header_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/personnel_provider.dart';
-import 'add_personnel_screen.dart';
 import '../widgets/text_field_widget.dart';
+import '../widgets/header_view.dart';
+import 'add_personnel_screen.dart';
 
 class PersonnelListScreen extends StatefulWidget {
   const PersonnelListScreen({super.key});
@@ -63,10 +63,7 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    Provider.of<PersonnelProvider>(
-                      context,
-                      listen: false,
-                    ).search(searchController.text);
+                    provider.search(searchController.text);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
@@ -125,9 +122,7 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
       itemBuilder: (context, index) {
         final p = provider.filteredList[index];
         final bool isActive = p.status == '1';
-        final String roles = p.roleDetails != null
-            ? p.roleDetails!.map((r) => r.role).join(', ')
-            : 'No Role';
+        final String roles = p.roleDetails?.map((r) => r.role).join(', ') ?? 'No Role';
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -29,12 +29,10 @@ class TextFieldWidget extends StatelessWidget {
   });
 
   String? _defaultValidator(String? value) {
-    // required check
     if (isRequired && (value == null || value.trim().isEmpty)) {
       return '$hint is required';
     }
 
-    // specific field validation based on hint
     if (hint == 'Full Name' && value != null && value.isNotEmpty) {
       final nameRegex = RegExp(r'^[a-zA-Z\s]+$');
       if (!nameRegex.hasMatch(value)) return 'Full Name can only contain letters and spaces';

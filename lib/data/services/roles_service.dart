@@ -20,13 +20,10 @@ class RolesService {
 
       if (response.statusCode == 200) {
         final List rolesData = jsonDecode(response.body) as List;
-        print("Roles fetched successfully: $rolesData");
         return rolesData.map((e) => Role.fromJson(e)).toList();
-      } else {
-        return [];
       }
-    } catch (e) {
-      print("Error fetching roles: $e");
+      return [];
+    } catch (_) {
       return [];
     }
   }

@@ -22,13 +22,10 @@ class AuthService {
 
       if (response.statusCode == 200 && data['status'] == true) {
         final loginResponse = LoginResponse.fromJson(data);
-
         await LocalStorage.saveToken(loginResponse.accessToken);
-
         return loginResponse;
-      } else {
-        return null;
       }
+      return null;
     } catch (e) {
       return null;
     }

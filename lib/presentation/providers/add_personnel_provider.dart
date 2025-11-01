@@ -16,17 +16,16 @@ class AddPersonnelProvider extends ChangeNotifier {
   Set<int> selectedRoleIds = {};
   bool isActive = true;
 
-  /// Fetch all roles from API
   Future<void> fetchRoles() async {
     isFetching = true;
     notifyListeners();
+
     roles = await _rolesService.fetchRoles();
-    print('Roles fetched successfully ${roles.length}');
+
     isFetching = false;
     notifyListeners();
   }
 
-  /// Fetch personnel details if editing
   Future<void> fetchPersonnelDetails(int id) async {
     isFetching = true;
     notifyListeners();
@@ -34,13 +33,8 @@ class AddPersonnelProvider extends ChangeNotifier {
     currentPersonnel = await _personnelService.fetchPersonnelById(id);
 
     if (currentPersonnel != null) {
-      // Set selected role IDs from API
       selectedRoleIds.clear();
-      if (currentPersonnel != null) {
-        selectedRoleIds.addAll(currentPersonnel!.roleDetails!.map((r) => r.id!));
-      }
-
-      // Set status
+      selectedRoleIds.addAll(currentPersonnel!.roleDetails?.map((r) => r.id!) ?? []);
       isActive = currentPersonnel!.status == '1';
     }
 
@@ -48,7 +42,6 @@ class AddPersonnelProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggle role selection
   void toggleRoleSelection(int roleId) {
     if (selectedRoleIds.contains(roleId)) {
       selectedRoleIds.remove(roleId);
@@ -58,23 +51,18 @@ class AddPersonnelProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set active/inactive status
   void setActive(bool value) {
     isActive = value;
     notifyListeners();
   }
 
-  /// Save or update personnel
   Future<bool> savePersonnel({required Map<String, dynamic> body, int? id}) async {
     isSaving = true;
     notifyListeners();
 
-    bool success;
-    if (id == null) {
-      success = await _personnelService.addPersonnel(body);
-    } else {
-      success = await _personnelService.updatePersonnel(id, body);
-    }
+    final success = id == null
+        ? await _personnelService.addPersonnel(body)
+        : await _personnelService.updatePersonnel(id, body);
 
     isSaving = false;
     notifyListeners();

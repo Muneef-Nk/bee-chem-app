@@ -9,12 +9,8 @@ class AuthProvider extends ChangeNotifier {
   String? token;
   LoginResponse? userData;
 
-  /// 🧩 Login handler
   Future<bool> login(String email, String password, bool rememberMe) async {
-    if (email.isEmpty || password.isEmpty) {
-      print("⚠️ Email or password empty");
-      return false;
-    }
+    if (email.isEmpty || password.isEmpty) return false;
 
     isLoading = true;
     notifyListeners();
@@ -31,31 +27,24 @@ class AuthProvider extends ChangeNotifier {
 
         await LocalStorage.saveToken(token!);
 
-        if (rememberMe) {
-          await LocalStorage.saveEmail(email);
-        }
+        if (rememberMe) await LocalStorage.saveEmail(email);
 
-        print("✅ Login successful for ${response.user.firstName}");
         return true;
       }
 
-      print("❌ Invalid credentials");
       return false;
-    } catch (e) {
+    } catch (_) {
       isLoading = false;
       notifyListeners();
-      print("⚠️ Login error: $e");
       return false;
     }
   }
 
-  /// 🧩 Check login state
   Future<bool> isLoggedIn() async {
     final token = await LocalStorage.getToken();
     return token != null && token.isNotEmpty;
   }
 
-  /// 🧩 Retrieve saved email
   Future<String?> getSavedEmail() async {
     return await LocalStorage.getEmail();
   }

@@ -10,17 +10,16 @@ class PersonnelProvider extends ChangeNotifier {
   List<Personnel> personnelList = [];
   List<Personnel> filteredList = [];
 
-  /// Fetch personnel list from API
   Future<void> getPersonnel() async {
-    try {
-      isLoading = true;
-      errorMessage = null;
-      notifyListeners();
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
 
+    try {
       final personnelResponse = await _service.fetchPersonnelList();
 
-      if (personnelResponse != null && personnelResponse.data != null) {
-        personnelList = personnelResponse.data!;
+      if (personnelResponse?.data != null) {
+        personnelList = personnelResponse!.data!;
         filteredList = List.from(personnelList);
       } else {
         errorMessage = 'No data found';
@@ -33,18 +32,16 @@ class PersonnelProvider extends ChangeNotifier {
     }
   }
 
-  /// Filter personnel by name (case-insensitive)
   void search(String query) {
     if (query.isEmpty) {
       filteredList = List.from(personnelList);
     } else {
-      filteredList = personnelList
-          .where(
-            (p) =>
-                (p.firstName ?? '').toLowerCase().contains(query.toLowerCase()) ||
-                (p.lastName ?? '').toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
+      final lowerQuery = query.toLowerCase();
+      filteredList = personnelList.where((p) {
+        final firstName = (p.firstName ?? '').toLowerCase();
+        final lastName = (p.lastName ?? '').toLowerCase();
+        return firstName.contains(lowerQuery) || lastName.contains(lowerQuery);
+      }).toList();
     }
     notifyListeners();
   }

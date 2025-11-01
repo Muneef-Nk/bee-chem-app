@@ -10,10 +10,7 @@ class PersonnelService {
   Future<PersonnelListModel?> fetchPersonnelList() async {
     try {
       final token = await LocalStorage.getToken();
-      if (token == null) {
-        print("❌ No token found — please login first.");
-        return null;
-      }
+      if (token == null) return null;
 
       final url = Uri.parse(ApiEndpoints.personnelDetails);
       final response = await http.get(
@@ -22,20 +19,15 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
-
       if (response.statusCode == 200 && data['status'] == true) {
         return PersonnelListModel.fromJson(data);
-      } else {
-        print("❌ Failed to load personnel list: ${data['message'] ?? 'Unknown error'}");
-        return null;
       }
+      return null;
     } catch (e) {
-      print("⚠️ Error in fetchPersonnelList: $e");
       return null;
     }
   }
 
-  /// 🧩 Get single personnel details by ID
   Future<Personnel?> fetchPersonnelById(int id) async {
     try {
       final token = await LocalStorage.getToken();
@@ -46,22 +38,15 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
-
-      print("data: $data");
-
       if (response.statusCode == 200 && data['status'] == true) {
         return Personnel.fromJson(data['data']);
-      } else {
-        print("❌ Failed to fetch personnel: ${data['message'] ?? 'Unknown error'}");
-        return null;
       }
+      return null;
     } catch (e) {
-      print("⚠️ Error fetching personnel by ID: $e");
       return null;
     }
   }
 
-  /// 🧩 Add new personnel
   Future<bool> addPersonnel(Map<String, dynamic> formData) async {
     try {
       final token = await LocalStorage.getToken();
@@ -77,23 +62,12 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
-
-      print("post data: $data");
-
-      if (response.statusCode == 200 && data['status'] == true) {
-        print("✅ Personnel added successfully");
-        return true;
-      } else {
-        print("❌ Failed to add personnel: ${data['message'] ?? 'Unknown error'}");
-        return false;
-      }
+      return response.statusCode == 200 && data['status'] == true;
     } catch (e) {
-      print("⚠️ Error adding personnel: $e");
       return false;
     }
   }
 
-  /// 🧩 Update personnel details
   Future<bool> updatePersonnel(int id, Map<String, dynamic> formData) async {
     try {
       final token = await LocalStorage.getToken();
@@ -109,17 +83,8 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
-      print("post data: $data");
-
-      if (response.statusCode == 200 && data['status'] == true) {
-        print("✅ Personnel updated successfully");
-        return true;
-      } else {
-        print("❌ Failed to update personnel: ${data['message'] ?? 'Unknown error'}");
-        return false;
-      }
+      return response.statusCode == 200 && data['status'] == true;
     } catch (e) {
-      print(" Error updating personnel: $e");
       return false;
     }
   }
