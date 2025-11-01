@@ -10,7 +10,8 @@ class TextFieldWidget extends StatelessWidget {
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
   final int maxLines;
-  final String? Function(String?)? validator; // added
+  final bool isRequired;
+  final String? Function(String?)? customValidator;
 
   const TextFieldWidget({
     super.key,
@@ -23,8 +24,34 @@ class TextFieldWidget extends StatelessWidget {
     required this.textInputAction,
     this.onChanged,
     this.maxLines = 1,
-    this.validator, // added
+    this.isRequired = true,
+    this.customValidator,
   });
+
+  String? _defaultValidator(String? value) {
+    // required check
+    if (isRequired && (value == null || value.trim().isEmpty)) {
+      return '$hint is required';
+    }
+
+    // specific field validation based on hint
+    if (hint == 'Full Name' && value != null && value.isNotEmpty) {
+      final nameRegex = RegExp(r'^[a-zA-Z\s]+$');
+      if (!nameRegex.hasMatch(value)) return 'Full Name can only contain letters and spaces';
+    }
+
+    if (hint == 'Post Code' && value != null && value.isNotEmpty) {
+      final postCodeRegex = RegExp(r'^\d{5,6}$');
+      if (!postCodeRegex.hasMatch(value)) return 'Enter a valid Post Code';
+    }
+
+    if (hint == 'Contact Number' && value != null && value.isNotEmpty) {
+      final phoneRegex = RegExp(r'^[0-9]{10}$');
+      if (!phoneRegex.hasMatch(value)) return 'Enter a valid 10-digit contact number';
+    }
+
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +75,13 @@ class TextFieldWidget extends StatelessWidget {
         ],
       ),
       child: TextFormField(
-        // <-- use TextFormField for validation
         controller: controller,
         obscureText: obscure,
         textInputAction: textInputAction,
         keyboardType: keyboardType,
         onChanged: onChanged,
         maxLines: maxLines,
-        validator: validator, // <-- now works
+        validator: customValidator ?? _defaultValidator,
         style: const TextStyle(fontSize: 16.0),
         decoration: InputDecoration(
           hintText: hint,

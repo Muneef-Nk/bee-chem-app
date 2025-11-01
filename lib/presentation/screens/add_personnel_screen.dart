@@ -22,10 +22,12 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
   final TextEditingController postCodeController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
   final TextEditingController additionalNotesController = TextEditingController();
+
+  String? _roleError;
+
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<AddPersonnelProvider>(context, listen: false);
 
@@ -60,17 +62,14 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
   }
 
   Future<void> _savePersonnel(AddPersonnelProvider provider) async {
-    if (!_formKey.currentState!.validate()) return;
+    final isValid = _formKey.currentState!.validate();
+    final isRoleSelected = provider.selectedRoleIds.isNotEmpty;
 
-    if (provider.selectedRoleIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one role.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    setState(() {
+      _roleError = isRoleSelected ? null : 'Please select at least one role';
+    });
+
+    if (!isValid || !isRoleSelected) return;
 
     final body = {
       "first_name": fullNameController.text,
@@ -86,25 +85,33 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
 
     final success = await provider.savePersonnel(body: body, id: widget.personnelId);
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.personnelId != null
-                ? 'Personnel updated successfully!'
-                : 'Personnel added successfully!',
-          ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(success ? Icons.check_circle_outline : Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                success
+                    ? (widget.personnelId != null
+                          ? 'Personnel updated successfully!'
+                          : 'Personnel added successfully!')
+                    : 'Failed to save personnel data.',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
-      );
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save personnel data.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+        backgroundColor: success ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    if (success) Navigator.pop(context, true);
   }
 
   Widget buildLabeledTextField(
@@ -112,20 +119,15 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
     TextEditingController controller, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    bool isRequired = true,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
-        TextFieldWidget(
-          controller: controller,
-          hint: 'Please type',
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
-        ),
-      ],
+    return TextFieldWidget(
+      controller: controller,
+      hint: label,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      isRequired: isRequired,
     );
   }
 
@@ -137,7 +139,6 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
 
         return Scaffold(
           backgroundColor: const Color.fromARGB(255, 241, 245, 248),
-
           body: provider.isFetching
               ? const Center(child: CircularProgressIndicator(color: Colors.amber))
               : Column(
@@ -151,11 +152,8 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
                           child: ListView(
                             children: [
                               buildLabeledTextField('Full Name', fullNameController),
-                              const SizedBox(height: 8),
                               buildLabeledTextField('Address', addressController),
-                              const SizedBox(height: 8),
                               buildLabeledTextField('Suburb', suburbController),
-                              const SizedBox(height: 10),
                               Row(
                                 children: [
                                   Expanded(child: buildLabeledTextField('State', stateController)),
@@ -165,7 +163,6 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
                               buildLabeledTextField(
                                 'Contact Number',
                                 contactController,
@@ -173,24 +170,34 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
                               ),
                               const SizedBox(height: 10),
                               const Text('Role', style: TextStyle(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 5),
                               ...provider.roles.map((role) {
                                 final isSelected = provider.selectedRoleIds.contains(role.id);
                                 return CheckboxListTile(
                                   title: Text(role.role ?? ""),
                                   value: isSelected,
-                                  onChanged: (_) => provider.toggleRoleSelection(role.id ?? 0),
+                                  onChanged: (_) => setState(() {
+                                    provider.toggleRoleSelection(role.id ?? 0);
+                                    _roleError = provider.selectedRoleIds.isNotEmpty
+                                        ? null
+                                        : 'Please select at least one role';
+                                  }),
                                   activeColor: Colors.green,
                                 );
-                              }),
-
-                              const SizedBox(height: 10),
-
+                              }).toList(),
+                              if (_roleError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+                                  child: Text(
+                                    _roleError!,
+                                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                                  ),
+                                ),
                               buildLabeledTextField(
                                 'Additional Notes',
                                 additionalNotesController,
                                 keyboardType: TextInputType.multiline,
                                 maxLines: 4,
+                                isRequired: false,
                               ),
                               const SizedBox(height: 20),
                               Container(

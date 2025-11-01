@@ -7,7 +7,6 @@ import '../models/personnel_model.dart';
 class PersonnelService {
   final String baseUrl = ApiEndpoints.baseUrl;
 
-  /// 🧩 Get personnel list
   Future<PersonnelListModel?> fetchPersonnelList() async {
     try {
       final token = await LocalStorage.getToken();
