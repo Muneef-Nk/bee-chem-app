@@ -48,6 +48,8 @@ class PersonnelService {
 
       final data = jsonDecode(response.body);
 
+      print("data: $data");
+
       if (response.statusCode == 200 && data['status'] == true) {
         return Personnel.fromJson(data['data']);
       } else {
@@ -76,6 +78,8 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
+
+      print("post data: $data");
 
       if (response.statusCode == 200 && data['status'] == true) {
         print("✅ Personnel added successfully");
@@ -106,6 +110,7 @@ class PersonnelService {
       );
 
       final data = jsonDecode(response.body);
+      print("post data: $data");
 
       if (response.statusCode == 200 && data['status'] == true) {
         print("✅ Personnel updated successfully");
@@ -115,7 +120,7 @@ class PersonnelService {
         return false;
       }
     } catch (e) {
-      print("⚠️ Error updating personnel: $e");
+      print(" Error updating personnel: $e");
       return false;
     }
   }

@@ -1,10 +1,11 @@
 class Role {
-  final int id;
-  final String role;
+  int? id;
+  String? role;
 
-  Role({required this.id, required this.role});
+  Role({this.id, this.role});
 
-  factory Role.fromJson(Map<String, dynamic> json) {
-    return Role(id: json['id'], role: json['role']);
+  Role.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    role = json['role'];
   }
 }

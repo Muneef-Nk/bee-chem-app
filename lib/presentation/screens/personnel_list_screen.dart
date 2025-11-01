@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:beechem_app/presentation/widgets/header_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/personnel_provider.dart';
@@ -38,52 +39,6 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
     });
   }
 
-  Widget _buildHeader() {
-    return SizedBox(
-      width: double.infinity,
-      child: Stack(
-        children: [
-          Image.asset("assets/Frame 18341.png", fit: BoxFit.cover),
-          Positioned(
-            top: 60,
-            left: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 20,
-              child: IconButton(
-                icon: const Icon(Icons.dashboard, color: Colors.black, size: 24),
-                onPressed: () {},
-              ),
-            ),
-          ),
-          Positioned(
-            top: 60,
-            right: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 20,
-              child: IconButton(
-                icon: const Icon(Icons.person, color: Colors.black, size: 24),
-                onPressed: () {},
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 50,
-            left: 0,
-            right: 0,
-            child: const Center(
-              child: Text(
-                'Personnel Details List',
-                style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<PersonnelProvider>(context);
@@ -92,7 +47,7 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
       backgroundColor: const Color.fromARGB(255, 250, 247, 247),
       body: Column(
         children: [
-          _buildHeader(),
+          buildHeader('Personnel Details List'),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -170,8 +125,8 @@ class _PersonnelListScreenState extends State<PersonnelListScreen> {
       itemBuilder: (context, index) {
         final p = provider.filteredList[index];
         final bool isActive = p.status == '1';
-        final String roles = p.roleDetails.isNotEmpty
-            ? p.roleDetails.map((r) => r.role).join(', ')
+        final String roles = p.roleDetails != null
+            ? p.roleDetails!.map((r) => r.role).join(', ')
             : 'No Role';
 
         return Container(

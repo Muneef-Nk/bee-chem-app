@@ -1,10 +1,11 @@
+import 'package:beechem_app/presentation/widgets/header_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../data/models/role_model.dart';
 import '../providers/add_personnel_provider.dart';
+import '../widgets/text_field_widget.dart';
 
 class AddPersonnelScreen extends StatefulWidget {
-  final int? personnelId; // null = Add, non-null = Edit
+  final int? personnelId;
   const AddPersonnelScreen({super.key, this.personnelId});
 
   @override
@@ -14,75 +15,118 @@ class AddPersonnelScreen extends StatefulWidget {
 class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController contactController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController suburbController = TextEditingController();
   final TextEditingController stateController = TextEditingController();
-  final TextEditingController countryController = TextEditingController();
-
+  final TextEditingController postCodeController = TextEditingController();
+  final TextEditingController contactController = TextEditingController();
+  final TextEditingController additionalNotesController = TextEditingController();
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<AddPersonnelProvider>(context, listen: false);
 
-    // Load roles first
-    provider.fetchRoles().then((_) async {
-      // If editing, load personnel details
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = Provider.of<AddPersonnelProvider>(context, listen: false);
+
+      await provider.fetchRoles();
+
       if (widget.personnelId != null) {
         await provider.fetchPersonnelDetails(widget.personnelId!);
         final p = provider.currentPersonnel;
-
         if (p != null) {
-          firstNameController.text = p.firstName ?? '';
-          lastNameController.text = p.lastName ?? '';
-          contactController.text = p.contactNumber ?? '';
+          fullNameController.text = p.firstName ?? '';
           addressController.text = p.address ?? '';
           suburbController.text = p.suburb ?? '';
           stateController.text = p.state ?? '';
-          countryController.text = p.country ?? '';
-
-          // Pre-select role if available
-          // if (p.roleId != null) {
-          //   final matchedRole = provider.roles.firstWhere(
-          //     (r) => r.id == p.roleId,
-          //     orElse: () => provider.roles.first,
-          //   );
-          //   provider.setSelectedRole(matchedRole);
-          // }
+          postCodeController.text = p.postcode ?? '';
+          contactController.text = p.contactNumber ?? '';
+          additionalNotesController.text = p.additionalNotes ?? '';
         }
       }
     });
   }
 
+  @override
+  void dispose() {
+    fullNameController.dispose();
+    addressController.dispose();
+    suburbController.dispose();
+    stateController.dispose();
+    postCodeController.dispose();
+    contactController.dispose();
+    additionalNotesController.dispose();
+    super.dispose();
+  }
+
   Future<void> _savePersonnel(AddPersonnelProvider provider) async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (provider.selectedRoleIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one role.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final body = {
-      "first_name": firstNameController.text,
-      "last_name": lastNameController.text,
-      "contact_number": contactController.text,
+      "first_name": fullNameController.text,
       "address": addressController.text,
       "suburb": suburbController.text,
       "state": stateController.text,
-      "country": countryController.text,
-      "role_id": provider.selectedRole?.id.toString(),
+      "postcode": postCodeController.text,
+      "contact_number": contactController.text,
+      "role_ids": provider.selectedRoleIds.join(','),
+      "additional_notes": additionalNotesController.text,
+      "status": provider.isActive ? '1' : '0',
     };
 
-    final isEdit = widget.personnelId != null;
     final success = await provider.savePersonnel(body: body, id: widget.personnelId);
 
     if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(isEdit ? 'Personnel updated' : 'Personnel added')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.personnelId != null
+                ? 'Personnel updated successfully!'
+                : 'Personnel added successfully!',
+          ),
+        ),
+      );
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Something went wrong')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save personnel data.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
+  }
+
+  Widget buildLabeledTextField(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        TextFieldWidget(
+          controller: controller,
+          hint: 'Please type',
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+        ),
+      ],
+    );
   }
 
   @override
@@ -92,87 +136,129 @@ class _AddPersonnelScreenState extends State<AddPersonnelScreen> {
         final isEdit = widget.personnelId != null;
 
         return Scaffold(
-          appBar: AppBar(title: Text(isEdit ? 'Edit Personnel' : 'Add Personnel')),
-          body: provider.isLoading && provider.roles.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: _formKey,
-                    child: ListView(
-                      children: [
-                        const Text(
-                          "Select Role",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
+          backgroundColor: const Color.fromARGB(255, 241, 245, 248),
 
-                        // Role Checkboxes
-                        ...provider.roles.map((role) {
-                          final isSelected = provider.selectedRole?.id == role.id;
-                          return CheckboxListTile(
-                            title: Text(role.role ?? 'Unknown Role'),
-                            value: isSelected,
-                            onChanged: (_) {
-                              provider.setSelectedRole(role);
-                            },
-                          );
-                        }).toList(),
+          body: provider.isFetching
+              ? const Center(child: CircularProgressIndicator(color: Colors.amber))
+              : Column(
+                  children: [
+                    buildHeader('Personnel Details'),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Form(
+                          key: _formKey,
+                          child: ListView(
+                            children: [
+                              buildLabeledTextField('Full Name', fullNameController),
+                              const SizedBox(height: 8),
+                              buildLabeledTextField('Address', addressController),
+                              const SizedBox(height: 8),
+                              buildLabeledTextField('Suburb', suburbController),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(child: buildLabeledTextField('State', stateController)),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: buildLabeledTextField('Post Code', postCodeController),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              buildLabeledTextField(
+                                'Contact Number',
+                                contactController,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text('Role', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 5),
+                              ...provider.roles.map((role) {
+                                final isSelected = provider.selectedRoleIds.contains(role.id);
+                                return CheckboxListTile(
+                                  title: Text(role.role ?? ""),
+                                  value: isSelected,
+                                  onChanged: (_) => provider.toggleRoleSelection(role.id ?? 0),
+                                  activeColor: Colors.green,
+                                );
+                              }),
 
-                        if (provider.selectedRole == null)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 12, bottom: 8),
-                            child: Text(
-                              'Please select a role',
-                              style: TextStyle(color: Colors.red, fontSize: 12),
-                            ),
+                              const SizedBox(height: 10),
+
+                              buildLabeledTextField(
+                                'Additional Notes',
+                                additionalNotesController,
+                                keyboardType: TextInputType.multiline,
+                                maxLines: 4,
+                              ),
+                              const SizedBox(height: 20),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: SwitchListTile(
+                                  title: const Text(
+                                    'Status',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  value: provider.isActive,
+                                  onChanged: provider.setActive,
+                                  activeColor: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(double.infinity, 50),
+                                        backgroundColor: const Color.fromARGB(255, 199, 198, 198),
+                                      ),
+                                      child: const Text(
+                                        'CANCEL',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: provider.isSaving
+                                          ? null
+                                          : () => _savePersonnel(provider),
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(double.infinity, 50),
+                                        backgroundColor: Colors.amber,
+                                      ),
+                                      child: Text(
+                                        provider.isSaving
+                                            ? 'Saving...'
+                                            : isEdit
+                                            ? 'UPDATE'
+                                            : 'ADD',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
-
-                        const Divider(height: 24),
-
-                        TextFormField(
-                          controller: firstNameController,
-                          decoration: const InputDecoration(labelText: 'First Name'),
-                          validator: (v) => v!.isEmpty ? 'Required' : null,
                         ),
-                        TextFormField(
-                          controller: lastNameController,
-                          decoration: const InputDecoration(labelText: 'Last Name'),
-                        ),
-                        TextFormField(
-                          controller: contactController,
-                          decoration: const InputDecoration(labelText: 'Contact Number'),
-                        ),
-                        TextFormField(
-                          controller: addressController,
-                          decoration: const InputDecoration(labelText: 'Address'),
-                        ),
-                        TextFormField(
-                          controller: suburbController,
-                          decoration: const InputDecoration(labelText: 'Suburb'),
-                        ),
-                        TextFormField(
-                          controller: stateController,
-                          decoration: const InputDecoration(labelText: 'State'),
-                        ),
-                        TextFormField(
-                          controller: countryController,
-                          decoration: const InputDecoration(labelText: 'Country'),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: provider.isLoading ? null : () => _savePersonnel(provider),
-                          child: Text(
-                            provider.isLoading
-                                ? 'Saving...'
-                                : isEdit
-                                ? 'Update'
-                                : 'Add',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
         );
       },

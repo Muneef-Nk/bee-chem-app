@@ -7,14 +7,10 @@ import '../models/role_model.dart';
 class RolesService {
   final String baseUrl = ApiEndpoints.baseUrl;
 
-  /// 🧩 Fetch roles list
   Future<List<Role>> fetchRoles() async {
     try {
       final token = await LocalStorage.getToken();
-      if (token == null) {
-        print("❌ No token found, please login first.");
-        return [];
-      }
+      if (token == null) return [];
 
       final url = Uri.parse(ApiEndpoints.roles);
       final response = await http.get(
@@ -22,17 +18,15 @@ class RolesService {
         headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['status'] == true) {
-        final List rolesData = data['data'] ?? [];
+      if (response.statusCode == 200) {
+        final List rolesData = jsonDecode(response.body) as List;
+        print("Roles fetched successfully: $rolesData");
         return rolesData.map((e) => Role.fromJson(e)).toList();
       } else {
-        print("❌ Failed to fetch roles: ${data['message'] ?? 'Unknown error'}");
         return [];
       }
     } catch (e) {
-      print("⚠️ Error fetching roles: $e");
+      print("Error fetching roles: $e");
       return [];
     }
   }

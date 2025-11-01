@@ -23,16 +23,13 @@ class AuthService {
       if (response.statusCode == 200 && data['status'] == true) {
         final loginResponse = LoginResponse.fromJson(data);
 
-        // ✅ Save the access token locally
         await LocalStorage.saveToken(loginResponse.accessToken);
 
         return loginResponse;
       } else {
-        print("❌ Login failed: ${data['message'] ?? 'Invalid credentials'}");
         return null;
       }
     } catch (e) {
-      print("⚠️ Error during login: $e");
       return null;
     }
   }

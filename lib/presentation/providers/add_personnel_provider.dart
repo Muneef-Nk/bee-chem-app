@@ -1,41 +1,72 @@
 import 'package:flutter/material.dart';
-import '../../data/models/role_model.dart';
 import '../../data/models/personnel_model.dart';
-import '../../data/services/roles_service.dart';
+import '../../data/models/role_model.dart';
 import '../../data/services/personnel_service.dart';
+import '../../data/services/roles_service.dart';
 
 class AddPersonnelProvider extends ChangeNotifier {
   final RolesService _rolesService = RolesService();
   final PersonnelService _personnelService = PersonnelService();
 
-  bool isLoading = false;
-  List<Role> roles = [];
-  Role? selectedRole;
-  Personnel? currentPersonnel;
+  bool isFetching = false;
+  bool isSaving = false;
 
-  /// Fetch available roles for dropdown
+  List<Role> roles = [];
+  Personnel? currentPersonnel;
+  Set<int> selectedRoleIds = {};
+  bool isActive = true;
+
+  /// Fetch all roles from API
   Future<void> fetchRoles() async {
+    isFetching = true;
+    notifyListeners();
     roles = await _rolesService.fetchRoles();
-    if (roles.isNotEmpty && selectedRole == null) {
-      selectedRole = roles.first;
-    }
+    print('Roles fetched successfully ${roles.length}');
+    isFetching = false;
     notifyListeners();
   }
 
-  /// Fetch single personnel details for edit mode
+  /// Fetch personnel details if editing
   Future<void> fetchPersonnelDetails(int id) async {
-    isLoading = true;
+    isFetching = true;
     notifyListeners();
 
     currentPersonnel = await _personnelService.fetchPersonnelById(id);
 
-    isLoading = false;
+    if (currentPersonnel != null) {
+      // Set selected role IDs from API
+      selectedRoleIds.clear();
+      if (currentPersonnel != null) {
+        selectedRoleIds.addAll(currentPersonnel!.roleDetails!.map((r) => r.id!));
+      }
+
+      // Set status
+      isActive = currentPersonnel!.status == '1';
+    }
+
+    isFetching = false;
     notifyListeners();
   }
 
-  /// Add or Update personnel
+  /// Toggle role selection
+  void toggleRoleSelection(int roleId) {
+    if (selectedRoleIds.contains(roleId)) {
+      selectedRoleIds.remove(roleId);
+    } else {
+      selectedRoleIds.add(roleId);
+    }
+    notifyListeners();
+  }
+
+  /// Set active/inactive status
+  void setActive(bool value) {
+    isActive = value;
+    notifyListeners();
+  }
+
+  /// Save or update personnel
   Future<bool> savePersonnel({required Map<String, dynamic> body, int? id}) async {
-    isLoading = true;
+    isSaving = true;
     notifyListeners();
 
     bool success;
@@ -45,13 +76,8 @@ class AddPersonnelProvider extends ChangeNotifier {
       success = await _personnelService.updatePersonnel(id, body);
     }
 
-    isLoading = false;
+    isSaving = false;
     notifyListeners();
     return success;
-  }
-
-  void setSelectedRole(Role role) {
-    selectedRole = role;
-    notifyListeners();
   }
 }

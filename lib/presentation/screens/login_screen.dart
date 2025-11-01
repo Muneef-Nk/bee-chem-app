@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/text_field_widget.dart';
-import '../widgets/button_widget.dart';
 import '../../core/storage/local_storage.dart';
 import 'personnel_list_screen.dart';
 
@@ -118,9 +117,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 /// 🔹 Login Button
-                ButtonWidget(
-                  text: authProvider.isLoading ? 'Logging in...' : 'Login',
-                  onTap: authProvider.isLoading ? () {} : () => _handleLogin(context),
+                ElevatedButton(
+                  child: Text(authProvider.isLoading ? 'Logging in...' : 'Login'),
+                  onPressed: authProvider.isLoading ? () {} : () => _handleLogin(context),
                 ),
               ],
             ),
